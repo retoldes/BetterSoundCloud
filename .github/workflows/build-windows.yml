@@ -1,0 +1,75 @@
+name: Build Windows installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to upload to (created if missing)'
+        required: true
+        default: 'V0.7.1'
+      replace_assets:
+        description: 'Replace existing assets on release (true/false)'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+        shell: bash
+
+      - name: Build with electron-forge
+        run: npx electron-forge make --platform=win32
+        shell: bash
+
+      - name: Stage release assets
+        id: stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p staged
+          # Wix MSI
+          find out/make/wix -type f -name "*.msi" -print -exec cp {} staged/BetterSoundCloud.0.7.1.msi \; || true
+          # Squirrel Setup.exe
+          find out/make/squirrel.windows -type f -name "*Setup.exe" -print -exec cp {} staged/BetterSoundCloud.0.7.1.Setup.exe \; || true
+          # Zip portable
+          find out/make/zip -type f -name "*.zip" -print -exec cp {} staged/BetterSoundCloud.0.7.1.zip \; || true
+          ls -la staged
+          echo "count=$(ls staged | wc -l)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifact (always)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bettersoundcloud-windows
+          path: staged/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload to release
+        if: ${{ steps.stage.outputs.count != '0' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          REPLACE: ${{ inputs.replace_assets }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TAG" --notes "Built from $(git rev-parse --short HEAD)"
+          fi
+          if [ "$REPLACE" = "true" ]; then
+            gh release upload "$TAG" staged/* --clobber
+          else
+            gh release upload "$TAG" staged/*
+          fi
