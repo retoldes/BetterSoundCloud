@@ -1,0 +1,60 @@
+name: Mirror upstream release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Upstream tag to mirror (e.g. V0.7.1)'
+        required: true
+        default: 'V0.7.1'
+      upstream:
+        description: 'Upstream repo (owner/name)'
+        required: true
+        default: 'AlirezaKJ/BetterSoundCloud'
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+
+      - name: Download upstream release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM: ${{ inputs.upstream }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          cd assets
+          gh release download "$TAG" --repo "$UPSTREAM"
+          ls -la
+
+      - name: Fetch upstream release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM: ${{ inputs.upstream }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --repo "$UPSTREAM" --json body -q .body > notes.md || echo "Mirror of $UPSTREAM@$TAG" > notes.md
+
+      - name: Create or update release on fork
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          UPSTREAM: ${{ inputs.upstream }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists on fork; uploading/refreshing assets."
+            gh release upload "$TAG" assets/* --clobber
+          else
+            gh release create "$TAG" assets/* \
+              --title "$TAG (mirrored from $UPSTREAM)" \
+              --notes-file notes.md
+          fi
