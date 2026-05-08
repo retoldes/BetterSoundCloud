@@ -12,15 +12,32 @@ const path = require("path");
 // (Preferences → "Discord App Client ID"). Defaults to the upstream
 // BetterSoundCloud application when nothing is configured. Users can supply
 // their own Discord application to ship their own assets / app name.
+//
+// Everything below is wrapped in a try/catch so a missing module or a
+// transient Discord-client error can't take down the rest of app.js. If RPC
+// init fails the rest of the renderer (settings UI, webview, downloader,
+// last.fm, …) still works — and the failure is visible in DevTools.
 // ──────────────────────────────────────────────────────────────────────────────
-const { Client, StatusDisplayType } = require("@xhayper/discord-rpc");
-const { ActivityType } = require("discord-api-types/v10");
-const resolvedDiscordRpcClientId =
-  (settings.discordrpcclientid && String(settings.discordrpcclientid).trim()) ||
-  DEFAULT_DISCORD_RPC_CLIENT_ID;
-const client = new Client({
-  clientId: resolvedDiscordRpcClientId,
-});
+let Client = null;
+let StatusDisplayType = null;
+let ActivityType = null;
+let client = null;
+let resolvedDiscordRpcClientId = null;
+try {
+  ({ Client, StatusDisplayType } = require("@xhayper/discord-rpc"));
+  ({ ActivityType } = require("discord-api-types/v10"));
+  resolvedDiscordRpcClientId =
+    (settings.discordrpcclientid &&
+      String(settings.discordrpcclientid).trim()) ||
+    DEFAULT_DISCORD_RPC_CLIENT_ID;
+  client = new Client({ clientId: resolvedDiscordRpcClientId });
+} catch (err) {
+  console.error(
+    "[BSC] Discord RPC init failed — RPC will be disabled this session:",
+    err,
+  );
+  client = null;
+}
 
 let appdirectory;
 ipcRenderer.on("apppath", function (evt, message) {
@@ -172,7 +189,7 @@ webview.addEventListener("console-message", (e) => {
 // ! Discord RPC LOOP function
 
 async function updateDiscordActivity() {
-  if (!client) return;
+  if (!client || !client.user) return;
 
   const isPause = cursonginfo.songstate === "paused";
   const title = cursonginfo.songtitle;
@@ -198,9 +215,20 @@ async function updateDiscordActivity() {
 
   // Track cover art — straight URL from SoundCloud's DOM. No BSC-branded
   // placeholder when paused: just keep the last cover.
-  if (cursonginfo.songcover) {
-    activity.largeImageKey = cursonginfo.songcover;
-    activity.largeImageText = isPause ? "Paused" : title;
+  //
+  // Discord SILENTLY DROPS THE WHOLE ACTIVITY if largeImageKey is malformed
+  // (protocol-relative `//…`, http://, empty string, or longer than ~256 chars
+  // — same applies to media-proxy). So we sanitize first.
+  const rawCover = cursonginfo.songcover;
+  if (typeof rawCover === "string") {
+    let cover = rawCover.trim();
+    if (cover.startsWith("//")) cover = "https:" + cover;
+    if (cover.startsWith("http://"))
+      cover = "https://" + cover.slice("http://".length);
+    if (/^https:\/\/.+/.test(cover) && cover.length <= 256) {
+      activity.largeImageKey = cover;
+      activity.largeImageText = isPause ? "Paused" : title;
+    }
   }
 
   // Progress bar / timestamps only while actually playing.
@@ -242,32 +270,15 @@ async function updateDiscordActivity() {
 }
 
 let updateActivityLoop = null;
-client.on("disconnected", (event) => {
-  clearInterval(updateActivityLoop);
-  updateActivityLoop = null;
-  lastActivity = null;
-
-  console.log(`Discord RPC disconnected! Trying to reconnect...`);
-  startConnect();
-});
-
-client.on("ready", () => {
-  console.log("Discord RPC is ready!");
-
-  if (updateActivityLoop != null) {
-    clearInterval(updateActivityLoop);
-    updateActivityLoop = null;
-  }
-
-  updateActivityLoop = setInterval(() => {
-    if (settings.discordrpc == true) {
-      updateDiscordActivity();
-    }
-  }, 1000);
-});
-
 let rpcRetry = null;
+
 const startConnect = () => {
+  if (!client) return;
+  // Don't even try to attach to Discord if the user has RPC disabled.
+  if (settings.discordrpc != true) {
+    console.log("[BSC] Discord RPC disabled in settings, skipping connect.");
+    return;
+  }
   if (rpcRetry != null) {
     clearInterval(rpcRetry);
     rpcRetry = null;
@@ -286,7 +297,34 @@ const startConnect = () => {
     }
   }, 5 * 1000);
 };
-startConnect();
+
+if (client) {
+  client.on("disconnected", (event) => {
+    clearInterval(updateActivityLoop);
+    updateActivityLoop = null;
+    lastActivity = null;
+
+    console.log(`Discord RPC disconnected! Trying to reconnect...`);
+    startConnect();
+  });
+
+  client.on("ready", () => {
+    console.log("Discord RPC is ready!");
+
+    if (updateActivityLoop != null) {
+      clearInterval(updateActivityLoop);
+      updateActivityLoop = null;
+    }
+
+    updateActivityLoop = setInterval(() => {
+      if (settings.discordrpc == true) {
+        updateDiscordActivity();
+      }
+    }, 1000);
+  });
+
+  startConnect();
+}
 
 let lyricshowcase = document.querySelector("#lyricshowcase");
 let lyriccoldiv = document.querySelector("#lyricshowcase .lyriccol");
