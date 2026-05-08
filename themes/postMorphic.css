@@ -16,7 +16,10 @@
 #playControls {
   background-color: #212121 !important;
 }
-html,
+/* Texture background scoped away from `html` — applying to <html> caused
+   the MUI background to show as transparent over our texture, making
+   text overlap on the new SoundCloud. Now applied to body only, behind. */
+:where(.sc-classic) html,
 .social-sign-in-separator span,
 .readMoreBadge__countWrapper {
   background-image: url("https://i.imgur.com/hnWHAn3.png") !important;

@@ -4,23 +4,31 @@
   filter: blur(7px)!important;
 } */
 
-#app {
-  display: flex!important;
-  justify-content: center!important;
+/* DISABLED: layout-overriding rules below caused the entire app to shift
+   under the post-April-2025 MUI rewrite of SoundCloud. The original rules
+   targeted legacy classes (.header.sc-selection-disabled, .playControls__inner)
+   that no longer exist in the same DOM positions, but `#app { display:flex }`
+   still applies and breaks the new MUI grid. Kept only as scoped legacy fallback. */
+
+/* legacy-only — only apply if old SC classes are present */
+:where(.sc-classic) #app {
+  display: flex;
+  justify-content: center;
 }
 
-.header.sc-selection-disabled, .playControls__inner {
-  width: 1240px!important;
+:where(.sc-classic) .header.sc-selection-disabled,
+:where(.sc-classic) .playControls__inner {
+  max-width: 1240px;
 }
 
-.header.sc-selection-disabled {
-  margin-inline: 0 auto!important;
+:where(.sc-classic) .header.sc-selection-disabled {
+  margin-inline: 0 auto;
 }
 
-.playControls {
-  display: flex!important;
-  justify-content: center!important;
-  margin-inline: 0 auto!important;
+:where(.sc-classic) .playControls {
+  display: flex;
+  justify-content: center;
+  margin-inline: 0 auto;
 }
 
 .playControls__inner, .playControls__elements {
@@ -335,14 +343,18 @@ input, textarea, .tokenInput__wrapper{
   }
 }
 
+/* legacy-only responsive widths: scoped to .sc-classic so they don't fight
+   the MUI fluid grid on the new SoundCloud */
 @media (max-width: 1239px) {
-  .header.sc-selection-disabled.fixed.g-z-index-header.sc-text-h4.show, .playControls__wrapper.l-container.l-fullwidth {
-    width: 1080px!important;
+  :where(.sc-classic) .header.sc-selection-disabled.fixed.g-z-index-header.sc-text-h4.show,
+  :where(.sc-classic) .playControls__wrapper.l-container.l-fullwidth {
+    max-width: 1080px;
   }
 }
 
 @media (max-width: 1079px) {
-  .header.sc-selection-disabled.fixed.g-z-index-header.sc-text-h4.show, .playControls__wrapper.l-container.l-fullwidth {
-    width: 960px!important;
+  :where(.sc-classic) .header.sc-selection-disabled.fixed.g-z-index-header.sc-text-h4.show,
+  :where(.sc-classic) .playControls__wrapper.l-container.l-fullwidth {
+    max-width: 960px;
   }
 }

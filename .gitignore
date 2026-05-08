@@ -1,3 +1,7 @@
 node_modules
 out/
 result
+
+# Local launcher scripts that contain hardcoded absolute paths
+start_bsc.bat
+start_bsc.vbs

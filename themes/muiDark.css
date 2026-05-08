@@ -1,0 +1,192 @@
+/* ============================================================
+   MUI Dark — a theme designed for the post-April-2025 SoundCloud.
+
+   Design rules (deliberately conservative):
+   - Sets COLORS only via CSS variables on :root.
+   - Never overrides MUI layout properties (display/flex/grid/width).
+   - Never uses the universal `*` selector.
+   - !important is allowed only on color-like properties so it wins
+     against MUI's own theme tokens but cannot fight geometry.
+   - Designed to layer additively on top of SoundCloud's built-in
+     dark mode (toggle it via Settings → Appearance → Dark first).
+   ============================================================ */
+
+:root {
+  /* SoundCloud orange, kept as-is */
+  --sc-accent: #ff5500;
+
+  /* Surface palette — slightly cooler than darkCloud */
+  --bsc-bg-0: #0e0f12;       /* page background */
+  --bsc-bg-1: #16181c;       /* elevated surface (cards) */
+  --bsc-bg-2: #1d2026;       /* hover / focused surface */
+  --bsc-bg-3: #262932;       /* dialogs / menus */
+
+  --bsc-border: #2a2d35;
+  --bsc-divider: #1f2228;
+
+  --bsc-text-1: #e8eaed;     /* primary text */
+  --bsc-text-2: #b3b6bd;     /* secondary text */
+  --bsc-text-3: #7a7e87;     /* muted */
+
+  /* Override SoundCloud's own MUI tokens where they exist.
+     We're being permissive: SC may use any of these names. */
+  --primary-color: var(--sc-accent);
+  --background-base-color: var(--bsc-bg-0);
+  --background-surface-color: var(--bsc-bg-1);
+  --background-highlight-color: var(--bsc-bg-2);
+  --foreground-color: var(--bsc-text-1);
+  --foreground-secondary-color: var(--bsc-text-2);
+  --foreground-tertiary-color: var(--bsc-text-3);
+  --border-light-color: var(--bsc-border);
+}
+
+/* Page background — only on body, NOT html (html stays transparent
+   so MUI's own layered backgrounds stack correctly). */
+body {
+  background-color: var(--bsc-bg-0);
+  color: var(--bsc-text-1);
+}
+
+/* MUI Paper / Box surfaces — use variables, do not touch geometry. */
+.MuiPaper-root,
+[class*="MuiPaper-root"] {
+  background-color: var(--bsc-bg-1);
+  color: var(--bsc-text-1);
+}
+
+/* MUI Menus, Popovers, Dialogs — elevated surfaces */
+.MuiMenu-paper,
+.MuiPopover-paper,
+.MuiDialog-paper,
+[class*="MuiMenu-paper"],
+[class*="MuiPopover-paper"],
+[class*="MuiDialog-paper"] {
+  background-color: var(--bsc-bg-3);
+  color: var(--bsc-text-1);
+  border: 1px solid var(--bsc-border);
+}
+
+/* MUI Buttons — neutral surface, accent on contained */
+.MuiButton-root,
+[class*="MuiButton-root"] {
+  color: var(--bsc-text-1);
+}
+.MuiButton-contained,
+[class*="MuiButton-contained"] {
+  background-color: var(--sc-accent);
+  color: #ffffff;
+}
+.MuiButton-outlined,
+[class*="MuiButton-outlined"] {
+  border-color: var(--bsc-border);
+  color: var(--bsc-text-1);
+}
+
+/* MUI Inputs */
+.MuiInputBase-root,
+.MuiOutlinedInput-root,
+[class*="MuiInputBase-root"],
+[class*="MuiOutlinedInput-root"] {
+  background-color: var(--bsc-bg-2);
+  color: var(--bsc-text-1);
+}
+.MuiOutlinedInput-notchedOutline,
+[class*="MuiOutlinedInput-notchedOutline"] {
+  border-color: var(--bsc-border);
+}
+
+/* MUI ListItem hover */
+.MuiListItem-root:hover,
+.MuiMenuItem-root:hover,
+[class*="MuiListItem-root"]:hover,
+[class*="MuiMenuItem-root"]:hover {
+  background-color: var(--bsc-bg-2);
+}
+
+/* MUI Dividers */
+.MuiDivider-root,
+[class*="MuiDivider-root"] {
+  border-color: var(--bsc-divider);
+}
+
+/* MUI Typography — color hints */
+.MuiTypography-root,
+[class*="MuiTypography-root"] {
+  color: var(--bsc-text-1);
+}
+.MuiTypography-body2,
+[class*="MuiTypography-body2"] {
+  color: var(--bsc-text-2);
+}
+.MuiTypography-caption,
+[class*="MuiTypography-caption"] {
+  color: var(--bsc-text-3);
+}
+
+/* MUI Icons — keep accent on highlighted state */
+.MuiIconButton-root,
+[class*="MuiIconButton-root"] {
+  color: var(--bsc-text-2);
+}
+.MuiIconButton-root:hover,
+[class*="MuiIconButton-root"]:hover {
+  color: var(--bsc-text-1);
+  background-color: var(--bsc-bg-2);
+}
+
+/* MUI Tabs */
+.MuiTab-root,
+[class*="MuiTab-root"] {
+  color: var(--bsc-text-2);
+}
+.MuiTab-root.Mui-selected,
+[class*="MuiTab-root"][aria-selected="true"] {
+  color: var(--sc-accent);
+}
+.MuiTabs-indicator,
+[class*="MuiTabs-indicator"] {
+  background-color: var(--sc-accent);
+}
+
+/* Scrollbars (Chromium / Electron only) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bsc-bg-0);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bsc-bg-2);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bsc-bg-3);
+}
+
+/* Legacy SoundCloud (.sc-classic) fallback — kept minimal so the
+   theme is also useful for users on older SC builds. */
+:where(.sc-classic) #app,
+:where(.sc-classic) body {
+  background-color: var(--bsc-bg-0);
+  color: var(--bsc-text-1);
+}
+:where(.sc-classic) .header,
+:where(.sc-classic) .playControls,
+:where(.sc-classic) .playControls__bg {
+  background-color: var(--bsc-bg-1);
+}
+
+/* SCI button icons — match darkCloud convention so SCI plugin keeps working */
+.playControls__themebtn {
+  background-image: url("https://raw.githubusercontent.com/AlirezaKJ/BetterSoundCloud/refs/heads/before0.6/lib/assets/ctx-themes-%23fff.png") !important;
+}
+.playControls__pluginbtn {
+  background-image: url("https://raw.githubusercontent.com/AlirezaKJ/BetterSoundCloud/refs/heads/before0.6/lib/assets/ctx-plugins-%23fff.png") !important;
+}
+.playControls__lyricbtn {
+  background-image: url("https://raw.githubusercontent.com/AlirezaKJ/BetterSoundCloud/refs/heads/before0.6/lib/assets/round_mic_%23fff.png") !important;
+}
+.playControls__showcasebtn {
+  background-image: url("https://raw.githubusercontent.com/AlirezaKJ/BetterSoundCloud/refs/heads/before0.6/lib/assets/baseline_smart_display_black_%23fff.png");
+}

@@ -1,15 +1,15 @@
+/* Custom CSS variables for the Nocturnal theme.
+   `!important` removed from variable definitions — it was overriding MUI's
+   own design tokens (e.g. --primary-color, --background-surface-color) on
+   the post-April-2025 SoundCloud which ALSO defines variables on :root. */
 :root {
-  --main-bg: #1d1e2a !important;
-  --dark-bg: #1a1b26 !important;
-  --darker-bg: #14151f !important;
-  --main-text: #888 !important;
-  /* grey */
-  --secondary-text: #8a7b70 !important;
-  /* yellow */
-  --third-text: #74857c !important;
-  /* green*/
-  --fourth-text: #556b82 !important;
-  /* blue*/
+  --main-bg: #1d1e2a;
+  --dark-bg: #1a1b26;
+  --darker-bg: #14151f;
+  --main-text: #888;          /* grey */
+  --secondary-text: #8a7b70;  /* yellow */
+  --third-text: #74857c;      /* green */
+  --fourth-text: #556b82;     /* blue */
 }
 
 /* CSS For SCI Elements */

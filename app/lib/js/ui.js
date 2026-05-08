@@ -159,6 +159,11 @@ function syncsettingsui() {
     case "postmorphic":
       themeitemsdiv[4].classList.add("active");
       break;
+    case "muidark":
+      // Index 5 — added for the post-April-2025 MUI rewrite of SoundCloud.
+      // Falls back gracefully if the markup hasn't been updated yet.
+      if (themeitemsdiv[5]) themeitemsdiv[5].classList.add("active");
+      break;
     default:
       themeitemsdiv[0].classList.add("active");
       break;
@@ -242,7 +247,10 @@ function selecttheme(index) {
     case 4:
       changeSettings("theme", "postmorphic");
       break;
-    
+    case 5:
+      // MUI Dark — designed for post-April-2025 SoundCloud
+      changeSettings("theme", "muidark");
+      break;
   }
   themeitemsdiv.forEach(function (themeitem) {
     themeitem.classList.remove("active");

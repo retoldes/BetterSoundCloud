@@ -1,10 +1,15 @@
-* {
-  border-color: #333 !important;
+/* Universal selector removed (was: * { border-color: #333 !important; })
+   It applied a border-color to every node including MUI boxes whose box-sizing
+   relies on border presence, causing the new SoundCloud (post-Apr-2025 MUI
+   rewrite) layout to shift. Replaced with a scoped fallback below. */
+:where(html, body) {
+  background: #121212;
+  color: #e0e0e0;
 }
-html,
-body {
-  background: #121212 !important;
-  color: #e0e0e0 !important;
+/* Safe scoped border-color fallback for legacy SC classes only */
+[class^="sc-"]:not([class*="MuiBox"]):not([class*="css-"]),
+[class*=" sc-"]:not([class*="MuiBox"]):not([class*="css-"]) {
+  border-color: #333;
 }
 #app {
   background-color: #121212 !important;

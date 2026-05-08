@@ -50,22 +50,43 @@ function loadstop() {
     }
 
     // LOAD THEME
+    let themeApplied = false;
     switch (settings.theme) {
       case "darkcloud":
         addstyle(path.join("themes", "darkCloud.css"));
+        themeApplied = true;
         break;
       case "nocturnal":
         addstyle(path.join("themes", "nocturnal.css"));
+        themeApplied = true;
         break;
       case "postmorphic":
         addstyle(path.join("themes", "postMorphic.css"));
+        themeApplied = true;
         break;
       case "glassmorphism":
-        addstyle(path.join("themes", "glassmorphism.css"));
+        addstyle(path.join("themes", "Glassmorphism.css"));
+        themeApplied = true;
+        break;
+      case "muidark":
+        addstyle(path.join("themes", "muiDark.css"));
+        themeApplied = true;
         break;
       default:
         console.log("No theme selected");
         break;
+    }
+
+    // LAYOUT GUARD — injected AFTER the theme so it can neutralize any
+    // geometry-breaking !important rules a theme might have (the post-MUI
+    // SoundCloud rewrite makes legacy themes shift layout otherwise).
+    // Always inject; harmless on vanilla because it only re-asserts MUI defaults.
+    if (themeApplied || settings.theme !== "vanilla") {
+      try {
+        addstyle(path.join("themes", "_guard.css"));
+      } catch (e) {
+        console.log("BSC|theme-guard|inject failed: " + e.message);
+      }
     }
 
     // LOAD CUSTOM CSS AND JS

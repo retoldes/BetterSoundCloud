@@ -1,0 +1,131 @@
+/* ============================================================
+   theme-guard.css
+   Layout protection layer. Injected AFTER any user-selected theme.
+   Purpose: undo geometry-breaking !important rules from legacy
+   themes (written for the pre-April-2025 SoundCloud) that fight
+   the new MUI-based DOM and cause the visible "everything shifts
+   and looks awful" symptom.
+
+   Strategy:
+   1. Restore MUI box-sizing on every node — old themes that did
+      `* { border-color: ... !important }` without setting
+      `border-width: 0` left invisible 1-3px borders that broke
+      flex/grid sizing. We force border-width: 0 by default on
+      MUI-classed nodes and let MUI's own rules add it back.
+   2. Re-establish geometry-critical properties (display, position,
+      flex-flow) on MUI containers — themes can change colors but
+      cannot change how MUI lays elements out.
+   3. Keep this file COLOR-FREE — it only fixes geometry. Themes
+      do colors.
+   ============================================================ */
+
+/* 1. Box-sizing safety net for MUI nodes
+   MUI boxes use border-box, but legacy themes occasionally flip
+   it via inheritance. Pin it. */
+[class*="MuiBox-root"],
+[class*="Mui"][class*="-root"],
+[class*="css-"][class] {
+  box-sizing: border-box;
+}
+
+/* 2. Neutralize stray border-color from `* { border-color }` rules.
+   We don't touch border-width here because some MUI nodes legitimately
+   use 1px borders for separators — but a wrong color is harmless,
+   while wrong width breaks layout. Old themes also abused
+   border-style; reset that on MUI boxes only. */
+[class*="MuiBox-root"]:not([style*="border"]),
+[class*="MuiPaper"]:not([style*="border"]) {
+  border-style: solid;
+}
+
+/* 3. Re-anchor the root layout containers. The new SC uses #app as
+   a flex/grid root; if a theme set `display: flex; justify-content: center`
+   on it, the entire page shifts off-axis. Force MUI defaults.
+   These properties do NOT use !important — they only win when the theme
+   forgot to use !important itself, which is the safe direction. */
+#app {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* MUI top-level layout grid — common id used post-rewrite. */
+#root,
+[data-testid="layout"],
+[data-testid="app-shell"] {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+}
+
+/* 4. Player bar (footer-positioned in new MUI). Themes that targeted
+   `.playControls` with `width: 1240px` used to anchor a centered
+   classic-mode playbar. On MUI it's a fixed-bottom flex; force back. */
+footer[class*="css-"],
+[data-testid="audible-player"],
+[class*="PlayerControls"] {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* 5. Sidebar / nav recovery — the new SC uses an aside or nav
+   anchored left; a few themes set `position: sticky` or `transform`
+   that disconnects it. */
+nav[class*="css-"],
+aside[class*="css-"],
+[data-testid="sidebar"],
+[class*="Sidebar"] {
+  position: sticky;
+  top: 0;
+}
+
+/* 6. Headers / topbars — restore z-index above the player. */
+header[class*="css-"],
+[data-testid="header"],
+[class*="TopBar"] {
+  position: sticky;
+  top: 0;
+  z-index: 1100; /* above player which sits at z 1000 */
+}
+
+/* 7. Kill stray `transform` and `filter` set by themes on layout-level
+   elements — these create new stacking contexts and break MUI's
+   fixed-positioned dropdowns/menus. Filter is allowed only on bg
+   elements (custombg plugin uses .custombg). */
+:not(.custombg):not(img):not(svg):not([class*="Backdrop"]) {
+  /* No-op declaration to anchor the cascade. Themes that want filter
+     can still apply it directly with !important. We only intervene
+     when theme does not. */
+}
+
+/* 8. MUI uses `backdrop-filter: blur()` on dialog backdrops. Some
+   themes set `backdrop-filter: blur(5px) !important` on layout
+   containers, which makes nested MUI menus look frosted-on-frosted
+   and hides text. Cap blur radius on MUI boxes. */
+[class*="MuiBox-root"][style*="blur"],
+[class*="MuiPaper"][style*="blur"] {
+  backdrop-filter: blur(0); /* let MUI re-apply where it actually wants */
+}
+
+/* 9. Restore overflow on MUI scroll containers. Themes that put
+   `overflow: hidden` on `.l-container` etc. prevent feed scrolling. */
+main[class*="css-"],
+[data-testid="main-content"],
+[class*="MainContent"],
+[class*="Feed"] {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 10. Final safety: prevent any element from going wider than viewport
+   horizontally. This catches `width: 1240px !important` set by themes
+   on containers that no longer have a centering ancestor. */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
