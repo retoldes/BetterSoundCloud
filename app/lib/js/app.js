@@ -40,9 +40,14 @@ try {
 }
 
 let appdirectory;
+let userdatadir;
 ipcRenderer.on("apppath", function (evt, message) {
   console.log(message);
   appdirectory = message;
+});
+ipcRenderer.on("userdatapath", function (evt, message) {
+  console.log(message);
+  userdatadir = message;
 });
 
 let webview = document.querySelector("#webview");
@@ -488,8 +493,9 @@ function scdownloaderbtnreq() {
   console.log(downloadurl);
   songtitle = "audio";
   // Create Downloads folder if it doesn't exist
-  if (!fs.existsSync(`${appdirectory}/Downloads`)) {
-    fs.mkdirSync(`${appdirectory}/Downloads`);
+  var dldir = path.join(userdatadir, 'Downloads');
+  if (!fs.existsSync(dldir)) {
+    fs.mkdirSync(dldir, { recursive: true });
   }
   let tooltip = document.querySelector("#downloaderstatusspan");
   scdl.getInfo(downloadurl).then((info) => {
@@ -498,9 +504,9 @@ function scdownloaderbtnreq() {
     tooltip.innerHTML = "Started Downloading " + songtitle;
     scdl.download(downloadurl).then((stream) => {
       stream.pipe(
-        fs.createWriteStream(`${appdirectory}/Downloads/${songtitle}.mp3`),
+        fs.createWriteStream(path.join(dldir, `${songtitle}.mp3`)),
       );
-      tooltip.innerHTML = `Saved to ${appdirectory}/Downloads/${songtitle}.mp3`;
+      tooltip.innerHTML = `Saved to ${path.join(dldir, songtitle + '.mp3')}`;
       // ipcRenderer.send("appDownloaderFinish");
     });
   });
