@@ -116,10 +116,10 @@
 				<div class="gapline"></div>
 				<div class="settingitem">
 					<div class="info">
-						<div class="name"> <!-- TODO: ADD FUNCTIONALITY  -->
-							Discord RPC 
+						<div class="name">
+							Discord RPC
 						</div>
-						<div class="description"> 
+						<div class="description">
 							Show what you are listening to on discord (this help the project as well ;).
 						</div>
 					</div>
@@ -134,7 +134,35 @@
 				<div class="settingitem">
 					<div class="info">
 						<div class="name">
-							Startup Load Last Page 
+							Discord App Client ID
+						</div>
+						<div class="description">
+							Optional. Application ID from <a href="https://discord.com/developers/applications" target="_blank">discord.com/developers/applications</a> if you want the presence to use your own Discord app (your name, your assets). Leave blank to use the default BetterSoundCloud app. Restart the app after changing.
+						</div>
+					</div>
+					<div class="manualinp">
+						<input type="text" placeholder="leave blank for default" name="discordrpcclientid">
+					</div>
+				</div>
+				<div class="gapline"></div>
+				<div class="settingitem">
+					<div class="info">
+						<div class="name">
+							SoundCloud Profile URL
+						</div>
+						<div class="description">
+							Optional. If set, a "My SoundCloud" button linking to this URL is added to your Discord presence.
+						</div>
+					</div>
+					<div class="manualinp">
+						<input type="url" placeholder="https://soundcloud.com/yourname" name="discordrpcprofileurl">
+					</div>
+				</div>
+				<div class="gapline"></div>
+				<div class="settingitem">
+					<div class="info">
+						<div class="name">
+							Startup Load Last Page
 						</div>
 						<div class="description">
 							Load the last soundcloud page you were when you closed the app.

@@ -7,14 +7,20 @@ const { f } = require("@cliqz/adblocker-electron");
 const path = require("path");
 
 // Discord RPC
+// ──────────────────────────────────────────────────────────────────────────────
+// The Application ID is configurable from the settings UI
+// (Preferences → "Discord App Client ID"). Defaults to the upstream
+// BetterSoundCloud application when nothing is configured. Users can supply
+// their own Discord application to ship their own assets / app name.
+// ──────────────────────────────────────────────────────────────────────────────
 const { Client, StatusDisplayType } = require("@xhayper/discord-rpc");
 const { ActivityType } = require("discord-api-types/v10");
+const resolvedDiscordRpcClientId =
+  (settings.discordrpcclientid && String(settings.discordrpcclientid).trim()) ||
+  DEFAULT_DISCORD_RPC_CLIENT_ID;
 const client = new Client({
-  clientId: "1054636117284106270", // Discord App Client ID
+  clientId: resolvedDiscordRpcClientId,
 });
-
-const clientVersion = packagefile.version;
-const startingTimestamp = Date.now();
 
 let appdirectory;
 ipcRenderer.on("apppath", function (evt, message) {
@@ -168,20 +174,14 @@ webview.addEventListener("console-message", (e) => {
 async function updateDiscordActivity() {
   if (!client) return;
 
-  let userviewpage = "Discover";
-  try {
-    const url = new URL(webview.getURL());
-    userviewpage = url.pathname.split("/")[1] || "Discover";
-  } catch {}
-
   const isPause = cursonginfo.songstate === "paused";
-  const title = cursonginfo.songtitle || "Unknown Title";
-  const artist = cursonginfo.songartist || "Unknown Artist";
+  const title = cursonginfo.songtitle;
+  const artist = cursonginfo.songartist;
 
-  const largeImageKey = isPause
-    ? "bw-exploring-bordered-white"
-    : cursonginfo.songcover;
-  const largeImageText = isPause ? "Exploring SoundCloud" : "";
+  // Wait until we actually have track data — without it there is nothing
+  // SoundCloud-related to show, and we are deliberately avoiding any
+  // BetterSoundCloud-branded fallback.
+  if (!title || !artist) return;
 
   const ts = calcTimestamps(
     cursonginfo.songcurrentdur,
@@ -190,20 +190,49 @@ async function updateDiscordActivity() {
 
   const activity = {
     type: ActivityType.Listening,
-    details: isPause ? "BetterSoundCloud" : `${title}`,
-    state: isPause ? `At ${userviewpage}` : `${artist}`,
-    largeImageKey,
-    largeImageText,
-    smallImageKey: "bw-icon-bordered-white",
-    smallImageText: `V${clientVersion}`,
+    details: title,
+    state: artist,
     instance: false,
-    startTimestamp: startingTimestamp,
     statusDisplayType: StatusDisplayType.DETAILS,
   };
 
+  // Track cover art — straight URL from SoundCloud's DOM. No BSC-branded
+  // placeholder when paused: just keep the last cover.
+  if (cursonginfo.songcover) {
+    activity.largeImageKey = cursonginfo.songcover;
+    activity.largeImageText = isPause ? "Paused" : title;
+  }
+
+  // Progress bar / timestamps only while actually playing.
   if (!isPause && ts) {
     activity.startTimestamp = ts.start;
     activity.endTimestamp = ts.end;
+  }
+
+  // Buttons. Discord allows at most 2.
+  // Button 1 — "Listen on SoundCloud", only attached when we have a real,
+  // well-formed track URL. Discord rejects buttons whose URL doesn't start
+  // with http(s):// and silently drops the whole activity, so we gate it.
+  // Button 2 — link to the user's own SoundCloud profile, only attached when
+  // a profile URL is configured in settings (Preferences → SoundCloud
+  // Profile URL).
+  const buttons = [];
+  const songurl = cursonginfo.songurl;
+  if (
+    typeof songurl === "string" &&
+    /^https:\/\/soundcloud\.com\/.+/.test(songurl) &&
+    !songurl.includes("/undefined")
+  ) {
+    buttons.push({ label: "Listen on SoundCloud", url: songurl });
+  }
+  const profileurl =
+    settings.discordrpcprofileurl &&
+    String(settings.discordrpcprofileurl).trim();
+  if (profileurl && /^https:\/\/soundcloud\.com\/.+/.test(profileurl)) {
+    buttons.push({ label: "My SoundCloud", url: profileurl });
+  }
+  if (buttons.length > 0) {
+    activity.buttons = buttons;
   }
 
   if (shallowEqual(activity, lastActivity)) return;

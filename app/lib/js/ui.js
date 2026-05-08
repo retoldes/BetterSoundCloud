@@ -88,6 +88,12 @@ let startuppageinp = document.querySelector(
 let useragentinp = document.querySelector(
   ".mainbar .settingitem .manualinp input[name='useragent']",
 );
+let discordrpcclientidinp = document.querySelector(
+  ".mainbar .settingitem .manualinp input[name='discordrpcclientid']",
+);
+let discordrpcprofileurlinp = document.querySelector(
+  ".mainbar .settingitem .manualinp input[name='discordrpcprofileurl']",
+);
 let themeitemsdiv = document.querySelectorAll(
   ".mainbar .selectthemes .themeitem",
 );
@@ -144,6 +150,16 @@ function syncsettingsui() {
   }
   if (settings["useragent"] != undefined) {
     useragentinp.value = settings["useragent"];
+  }
+
+  if (discordrpcclientidinp && settings["discordrpcclientid"] != undefined) {
+    discordrpcclientidinp.value = settings["discordrpcclientid"];
+  }
+  if (
+    discordrpcprofileurlinp &&
+    settings["discordrpcprofileurl"] != undefined
+  ) {
+    discordrpcprofileurlinp.value = settings["discordrpcprofileurl"];
   }
 
   switch (settings.theme) {
@@ -228,6 +244,20 @@ useragentinp.addEventListener("change", function () {
     changeSettings(this.name, this.value);
   }
 });
+
+// Discord RPC: Client ID + SoundCloud profile URL.
+// Both are stored verbatim; the renderer (app.js) treats blank values as
+// "use default" / "no second button".
+if (discordrpcclientidinp) {
+  discordrpcclientidinp.addEventListener("change", function () {
+    changeSettings(this.name, this.value.trim());
+  });
+}
+if (discordrpcprofileurlinp) {
+  discordrpcprofileurlinp.addEventListener("change", function () {
+    changeSettings(this.name, this.value.trim());
+  });
+}
 
 // SELECT THEME IN SETTINGS PAGE
 function selecttheme(index) {

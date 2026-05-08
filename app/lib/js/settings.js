@@ -1,8 +1,18 @@
+// Default Discord Application ID — the upstream BSC application.
+// Users can override this via the settings UI to use their own Discord app
+// (which lets them ship their own assets / app name / etc.).
+const DEFAULT_DISCORD_RPC_CLIENT_ID = "1054636117284106270";
+
 let settings = {
   customcss: dbResolve("settings.customcss", undefined),
   customjs: dbResolve("settings.customjs", undefined),
   custombg: dbResolve("settings.custombg", true),
   discordrpc: dbResolve("settings.discordrpc", true),
+  discordrpcclientid: dbResolve(
+    "settings.discordrpcclientid",
+    DEFAULT_DISCORD_RPC_CLIENT_ID,
+  ),
+  discordrpcprofileurl: dbResolve("settings.discordrpcprofileurl", ""),
   bindctrlr: dbResolve("settings.bindctrlr", "reloadview"),
   bindf5: dbResolve("settings.bindf5", undefined),
   startupfullscreen: dbResolve("settings.startupfullscreen", false),
@@ -23,6 +33,8 @@ function updateLS() {
   dbSetItem("settings.customjs", settings.customjs);
   dbSetItem("settings.custombg", settings.custombg);
   dbSetItem("settings.discordrpc", settings.discordrpc);
+  dbSetItem("settings.discordrpcclientid", settings.discordrpcclientid);
+  dbSetItem("settings.discordrpcprofileurl", settings.discordrpcprofileurl);
   dbSetItem("settings.bindctrlr", settings.bindctrlr);
   dbSetItem("settings.bindf5", settings.bindf5);
   dbSetItem("settings.startupfullscreen", settings.startupfullscreen);
